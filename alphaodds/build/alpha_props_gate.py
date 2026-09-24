@@ -170,28 +170,70 @@ def load_weekly_stats(raw: Path) -> pd.DataFrame:
 
 
 def attach_snap_state(base: pd.DataFrame, raw: Path) -> tuple[pd.DataFrame, dict]:
-    snaps = pd.concat([pd.read_csv(raw / f"snap_counts_{s}.csv", low_memory=False) for s in SEASONS], ignore_index=True, sort=False)
-    rename = {}
-    for c in snaps.columns:
-        lc = c.lower()
-        if lc in {"gsis_id", "player_id"}:
-            rename[c] = "player_id"
-        elif lc in {"offense_snaps", "off_snaps"}:
-            rename[c] = "offense_snaps"
-        elif lc in {"offense_pct", "off_pct", "offense_percentage"}:
-            rename[c] = "offense_pct"
-    snaps = snaps.rename(columns=rename)
-    needed = {"season", "week", "player_id"}
-    if not needed.issubset(snaps.columns):
-        return base, {"status": "HOLD_SCHEMA", "columns": list(snaps.columns)}
-    keep = [c for c in ["season", "week", "player_id", "offense_snaps", "offense_pct"] if c in snaps.columns]
-    snaps = snaps[keep].copy()
-    snaps["season"] = pd.to_numeric(snaps["season"], errors="coerce")
-    snaps["week"] = pd.to_numeric(snaps["week"], errors="coerce")
-    snaps = snaps.drop_duplicates(["season", "week", "player_id"], keep="last")
-    out = base.merge(snaps, on=["season", "week", "player_id"], how="left", validate="m:1")
-    return out, {"status": "PASS_STATE_JOINED_THEN_LAGGED", "columns": keep, "rows": int(len(snaps))}
+    """Attach same-week snap state through the authenticated roster PFR->GSIS crosswalk.
+    The attached same-week snap columns are state only; build_features shifts them by one
+    player-game before they are eligible as predictors.
+    """
+    snaps = pd.concat(
+        [pd.read_csv(raw / f"snap_counts_{s}.csv", low_memory=False) for s in SEASONS],
+        ignore_index=True, sort=False
+    )
+    rosters = pd.concat(
+        [pd.read_csv(raw / f"roster_weekly_{s}.csv", low_memory=False) for s in SEASONS],
+        ignore_index=True, sort=False
+    )
 
+    required_snap = {"season", "week", "pfr_player_id"}
+    required_roster = {"season", "week", "pfr_id", "gsis_id"}
+    if not required_snap.issubset(snaps.columns) or not required_roster.issubset(rosters.columns):
+        return base, {
+            "status": "HOLD_SCHEMA",
+            "snap_columns": list(snaps.columns),
+            "roster_columns": list(rosters.columns),
+        }
+
+    snaps = snaps.rename(columns={"pfr_player_id": "pfr_id"})
+    snap_keep = [c for c in ["season", "week", "pfr_id", "team", "offense_snaps", "offense_pct"] if c in snaps.columns]
+    snaps = snaps[snap_keep].copy()
+    roster_keep = [c for c in ["season", "week", "pfr_id", "gsis_id", "team", "full_name"] if c in rosters.columns]
+    rosters = rosters[roster_keep].copy()
+
+    for x in (snaps, rosters):
+        x["season"] = pd.to_numeric(x["season"], errors="coerce")
+        x["week"] = pd.to_numeric(x["week"], errors="coerce")
+        x["pfr_id"] = x["pfr_id"].astype("string")
+    rosters["gsis_id"] = rosters["gsis_id"].astype("string")
+
+    # Unique source-key crosswalk. Team is added when available to avoid same-week ambiguity.
+    join_keys = ["season", "week", "pfr_id"]
+    if "team" in snaps.columns and "team" in rosters.columns:
+        join_keys.append("team")
+    cross = rosters.dropna(subset=["pfr_id", "gsis_id"]).drop_duplicates(join_keys, keep="last")
+    mapped = snaps.merge(cross[join_keys + ["gsis_id"]], on=join_keys, how="left", validate="m:1")
+    mapped = mapped.rename(columns={"gsis_id": "player_id"})
+    mapped = mapped.dropna(subset=["player_id"]).copy()
+    mapped["player_id"] = mapped["player_id"].astype("string")
+
+    keep = [c for c in ["season", "week", "player_id", "offense_snaps", "offense_pct"] if c in mapped.columns]
+    mapped = mapped[keep].drop_duplicates(["season", "week", "player_id"], keep="last")
+
+    b = base.copy()
+    b["player_id"] = b["player_id"].astype("string")
+    out = b.merge(mapped, on=["season", "week", "player_id"], how="left", validate="m:1")
+
+    snap_rows = int(len(snaps))
+    mapped_rows = int(len(mapped))
+    coverage = float(mapped_rows / snap_rows) if snap_rows else 0.0
+    status = "PASS_STATE_JOINED_THEN_LAGGED" if coverage >= 0.90 else "HOLD_CROSSWALK_COVERAGE"
+    return out, {
+        "status": status,
+        "snap_rows": snap_rows,
+        "mapped_rows": mapped_rows,
+        "crosswalk_coverage": coverage,
+        "join_keys": join_keys,
+        "state_columns": keep,
+        "predictor_rule": "same-week snap state attached then shift(1) before use",
+    }
 
 def add_team_shares(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
@@ -426,7 +468,7 @@ def main():
             "sample_stability": "PASS" if all(m.get("sample_stability_pass") for m in models) else "HOLD",
             "interval_calibration": "PASS" if all(m.get("coverage_pass") for m in models) else "HOLD",
             "role_uncertainty": "LIMITED_PASS_PRIOR_USAGE_ONLY",
-            "posthoc_2024_tuning": "PROHIBITED_NONE_PERFORMED",
+            "posthoc_2024_tuning": "PROHIBITED_NONE_PERFORMED",\n            "validation_exposure_caveat": "2024 metrics were exposed by prior failed plumbing run before roster crosswalk repair; this repair changes identity plumbing only, not frozen features, hyperparameters, thresholds, or gates.",
         },
         "freeze_gate": {
             "source_pass": source_pass,
