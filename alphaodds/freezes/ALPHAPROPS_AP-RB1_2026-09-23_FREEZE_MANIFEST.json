@@ -1,0 +1,106 @@
+{
+  "freeze_id": "ALPHAPROPS-AP-RB1-2026-09-23",
+  "status": "FROZEN_RESEARCH_BASELINE_NOT_BETTING_EDGE",
+  "effective_date_user_timezone": "2026-09-23",
+  "scope": "QB passing yards; RB rushing yards; WR receiving yards/receptions; TE receiving yards/receptions",
+  "non_negotiables": {
+    "wager_execution": "DISABLED",
+    "historical_prop_profitability_claim": "PROHIBITED_WITHOUT_AUTHENTICATED_HISTORICAL_PROP_PRICE_EVIDENCE",
+    "holdout_2025": "NOT_DOWNLOADED_OPENED_OR_READ_BEFORE_THIS_FREEZE",
+    "prior_2024_exposure_caveat": "PRESERVED: 2024 metrics were exposed by a failed plumbing run before identity repair; no target, feature family, hyperparameter, threshold, gate, or split was changed afterward."
+  },
+  "development_split": {
+    "development": [2021, 2022, 2023],
+    "validation": [2024],
+    "holdout_after_freeze_only": [2025]
+  },
+  "model_fingerprint": {
+    "repository": "Bucciecline/case-management-system",
+    "validated_model_commit": "0ec24d82ab1e575e0c7e8372ebe576329b57d91f",
+    "promotion_pre_manifest_head": "c2150705782aec9b154706b46d1f3fbd1f047c64",
+    "model_script_path": "alphaodds/build/alpha_props_gate.py",
+    "model_script_blob_sha1": "a2052512b20fa25ebba439ce463d097926c47459",
+    "model_workflow_path": ".github/workflows/alphaprops-gate.yml",
+    "model_workflow_blob_sha1": "378d832266a88aa0a225fc5207899530a8f8f0e3",
+    "post_validation_compare": {
+      "base": "0ec24d82ab1e575e0c7e8372ebe576329b57d91f",
+      "head": "c2150705782aec9b154706b46d1f3fbd1f047c64",
+      "commits_ahead": 2,
+      "changed_files": [
+        ".github/workflows/alphaprops-identity-gate.yml",
+        "alphaodds/build/alpha_props_identity_gate.py"
+      ],
+      "model_script_changed": false,
+      "model_workflow_changed": false
+    }
+  },
+  "frozen_model_specification": {
+    "rolling_windows": [3, 5, 8],
+    "model_class": "HistGradientBoostingRegressor",
+    "learning_rate": 0.05,
+    "max_iter": 250,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 20,
+    "l2_regularization": 1.0,
+    "random_state": 190022,
+    "receptions_loss": "poisson",
+    "yardage_loss": "squared_error",
+    "minimum_prior_games": 3,
+    "sample_stability_max_fold_mae_ratio": 1.75,
+    "nominal_80pct_interval_coverage_gate": [0.65, 0.95],
+    "minimum_development_n": 100,
+    "minimum_validation_n": 40,
+    "minimum_fold_n": 20,
+    "role_history_identity_threshold": 0.90
+  },
+  "projection_gate": {
+    "workflow_run": 35946198494,
+    "artifact_sha256": "1924c16c044208d45b1f6552f707d07172503d394d6a6e91b24b97d93bcc7add",
+    "first_model_report_sha256": "e61d5a11b2994979906ed90b5e0bfbc037d44caf9e1a8a76c84de290569c4376",
+    "source_receipts": "PASS_24_OF_24",
+    "same_week_leakage": "PASS",
+    "sample_stability": "PASS_ALL_SIX_TARGETS",
+    "interval_calibration": "PASS_ALL_SIX_TARGETS",
+    "targets": [
+      {"position":"QB","target":"passing_yards","validation_n":636,"mae":69.88934823460198,"rmse":88.22951254179243,"median_ae":59.86434253616069,"coverage":0.8333333333333334,"fold_mae_ratio":1.052341817786195,"gate":"PASS"},
+      {"position":"RB","target":"rushing_yards","validation_n":1453,"mae":20.700422479434437,"rmse":29.042013757140307,"median_ae":14.456277572060035,"coverage":0.8100481761871989,"fold_mae_ratio":1.0885070615170953,"gate":"PASS"},
+      {"position":"WR","target":"receiving_yards","validation_n":2300,"mae":21.690760586811876,"rmse":29.855341839193137,"median_ae":16.175239678550586,"coverage":0.8282608695652174,"fold_mae_ratio":1.1167155059486649,"gate":"PASS"},
+      {"position":"WR","target":"receptions","validation_n":2300,"mae":1.4536632710332449,"rmse":1.9491452469969774,"median_ae":1.1229357563901274,"coverage":0.8126086956521739,"fold_mae_ratio":1.1122521953777638,"gate":"PASS"},
+      {"position":"TE","target":"receiving_yards","validation_n":1156,"mae":16.160084917892732,"rmse":21.748546872681192,"median_ae":12.021479398540638,"coverage":0.8001730103806228,"fold_mae_ratio":1.06290616366616,"gate":"PASS"},
+      {"position":"TE","target":"receptions","validation_n":1156,"mae":1.3315720035833365,"rmse":1.8569545823145734,"median_ae":0.9637011101928443,"coverage":0.7811418685121108,"fold_mae_ratio":1.009247775590527,"gate":"PASS"}
+    ]
+  },
+  "identity_gate": {
+    "workflow_run": 35946952977,
+    "artifact_sha256": "7e52f47885db685845e49b8e711a4590abceecd1ee50d0a516995575ab4c3cbb",
+    "population": "REGULAR_SEASON_QB_RB_WR_TE_SNAP_HISTORY_2021_2024",
+    "rows": 27451,
+    "mapped_rows": 27332,
+    "coverage": 0.9956650030964264,
+    "threshold": 0.90,
+    "team_alias_authority_commit": "08adcd384baab25063ce3761fc994e931ce1ebc7",
+    "team_alias_authority_blob_sha1": "8c3683d118fa2362a7bcf61cbf95806639ae2d82",
+    "fuzzy_name_matching": "NOT_USED",
+    "ambiguous_fallbacks": "EXCLUDED",
+    "cross_source_identity_conflicts": 0,
+    "cca15": "PASS",
+    "defense_red_team": "PASS"
+  },
+  "combined_promotion_gate": {
+    "projection_gate_pass": true,
+    "identity_gate_pass": true,
+    "model_specification_unchanged_after_2024_exposure": true,
+    "thresholds_unchanged_after_2024_exposure": true,
+    "data_split_unchanged_after_2024_exposure": true,
+    "2025_closed_through_freeze_record": true,
+    "cca15": "PASS_WITH_PRIOR_2024_EXPOSURE_CAVEAT_PRESERVED",
+    "defense_red_team": "PASS_RESEARCH_BASELINE_ONLY",
+    "decision": "PROMOTE_TO_FROZEN_RESEARCH_BASELINE"
+  },
+  "market_status": {
+    "projection_research": "FROZEN_BASELINE",
+    "prop_betting_edge": "NOT_ESTABLISHED",
+    "roi_clv_ev_claims": "BLOCKED_WITHOUT_PRICE_EVIDENCE",
+    "prospective_shadow_validation": "REQUIRED_BEFORE_ANY_WAGERING_SIGNAL_PROMOTION"
+  }
+}
