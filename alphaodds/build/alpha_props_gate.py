@@ -468,7 +468,8 @@ def main():
             "sample_stability": "PASS" if all(m.get("sample_stability_pass") for m in models) else "HOLD",
             "interval_calibration": "PASS" if all(m.get("coverage_pass") for m in models) else "HOLD",
             "role_uncertainty": "LIMITED_PASS_PRIOR_USAGE_ONLY",
-            "posthoc_2024_tuning": "PROHIBITED_NONE_PERFORMED",\n            "validation_exposure_caveat": "2024 metrics were exposed by prior failed plumbing run before roster crosswalk repair; this repair changes identity plumbing only, not frozen features, hyperparameters, thresholds, or gates.",
+            "posthoc_2024_tuning": "PROHIBITED_NONE_PERFORMED",
+            "validation_exposure_caveat": "2024 metrics were exposed by prior failed plumbing run before roster crosswalk repair; this repair changes identity plumbing only, not frozen features, hyperparameters, thresholds, or gates.",
         },
         "freeze_gate": {
             "source_pass": source_pass,
