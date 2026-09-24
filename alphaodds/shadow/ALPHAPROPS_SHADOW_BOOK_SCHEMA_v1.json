@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alphaodds.local/schemas/alphaprops-shadow-book-v1.json",
+  "title": "AlphaProps Prospective Shadow Book v1",
+  "description": "Append-only prospective player-prop research records. No wager execution fields are permitted.",
+  "type": "object",
+  "required": ["schema_version", "record_type", "record_id", "created_at_utc", "freeze_id"],
+  "properties": {
+    "schema_version": {"const": "ALPHAPROPS-SHADOW-v1.0"},
+    "record_type": {"enum": ["QUOTE_SNAPSHOT", "PREKICK_DECISION", "POSTGAME_GRADE"]},
+    "record_id": {"type": "string", "minLength": 12},
+    "created_at_utc": {"type": "string", "format": "date-time"},
+    "freeze_id": {"const": "ALPHAPROPS-AP-RB1-2026-09-23"},
+    "quote": {"$ref": "#/$defs/quote"},
+    "decision": {"$ref": "#/$defs/decision"},
+    "grade": {"$ref": "#/$defs/grade"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"record_type": {"const": "QUOTE_SNAPSHOT"}}},
+      "then": {"required": ["quote"]}
+    },
+    {
+      "if": {"properties": {"record_type": {"const": "PREKICK_DECISION"}}},
+      "then": {"required": ["decision"]}
+    },
+    {
+      "if": {"properties": {"record_type": {"const": "POSTGAME_GRADE"}}},
+      "then": {"required": ["grade"]}
+    }
+  ],
+  "not": {
+    "anyOf": [
+      {"required": ["stake"]},
+      {"required": ["bet_id"]},
+      {"required": ["wager_id"]},
+      {"required": ["transmission_status"]}
+    ]
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "required": ["event_id", "season", "week", "kickoff_utc", "away_team", "home_team"],
+      "properties": {
+        "event_id": {"type": "string"},
+        "season": {"type": "integer", "minimum": 2026},
+        "week": {"type": "integer", "minimum": 1, "maximum": 25},
+        "kickoff_utc": {"type": "string", "format": "date-time"},
+        "away_team": {"type": "string"},
+        "home_team": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "player": {
+      "type": "object",
+      "required": ["gsis_id", "player_name", "position", "team"],
+      "properties": {
+        "gsis_id": {"type": "string"},
+        "player_name": {"type": "string"},
+        "position": {"enum": ["QB", "RB", "WR", "TE"]},
+        "team": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "market": {
+      "type": "object",
+      "required": ["market_family", "canonical_stat", "side", "line", "settlement_rule_id", "settlement_text"],
+      "properties": {
+        "market_family": {
+          "enum": [
+            "QB_PASSING_YARDS",
+            "RB_RUSHING_YARDS",
+            "WR_RECEIVING_YARDS",
+            "WR_RECEPTIONS",
+            "TE_RECEIVING_YARDS",
+            "TE_RECEPTIONS"
+          ]
+        },
+        "canonical_stat": {"enum": ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]},
+        "side": {"enum": ["OVER", "UNDER"]},
+        "line": {"type": "number"},
+        "settlement_rule_id": {"type": "string"},
+        "settlement_text": {"type": "string", "minLength": 3}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["authentication_status", "evidence_type", "evidence_ref"],
+      "properties": {
+        "authentication_status": {"enum": ["AUTHENTICATED", "UNVERIFIED"]},
+        "evidence_type": {"enum": ["RAW_API_PAYLOAD", "SCREENSHOT", "SAVED_PAGE", "PROVIDER_RECEIPT", "OTHER"]},
+        "evidence_ref": {"type": "string"},
+        "evidence_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "quote": {
+      "type": "object",
+      "required": ["quote_id", "capture_phase", "captured_at_utc", "event", "player", "market", "source", "american_odds", "market_status", "evidence"],
+      "properties": {
+        "quote_id": {"type": "string"},
+        "capture_phase": {"enum": ["EARLY", "PRIMARY", "CLOSE_PROXY", "MOVE_UPDATE"]},
+        "captured_at_utc": {"type": "string", "format": "date-time"},
+        "provider_timestamp_utc": {"type": ["string", "null"], "format": "date-time"},
+        "event": {"$ref": "#/$defs/event"},
+        "player": {"$ref": "#/$defs/player"},
+        "market": {"$ref": "#/$defs/market"},
+        "source": {
+          "type": "object",
+          "required": ["source_name", "source_type"],
+          "properties": {
+            "source_name": {"type": "string"},
+            "source_type": {"enum": ["SPORTSBOOK_UI", "SPORTSBOOK_API", "ODDS_FEED", "MANUAL_CAPTURE"]},
+            "provider_event_id": {"type": ["string", "null"]},
+            "provider_market_id": {"type": ["string", "null"]},
+            "provider_quote_id": {"type": ["string", "null"]}
+          },
+          "additionalProperties": false
+        },
+        "american_odds": {"type": "integer", "not": {"enum": [0]}},
+        "decimal_odds": {"type": "number", "exclusiveMinimum": 1.0},
+        "implied_break_even_probability": {"type": "number", "minimum": 0, "maximum": 1},
+        "counterpart_quote_id": {"type": ["string", "null"]},
+        "no_vig_market_probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "market_status": {"enum": ["OPEN", "SUSPENDED", "CLOSED", "UNKNOWN"]},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      },
+      "additionalProperties": false
+    },
+    "forecast": {
+      "type": "object",
+      "required": ["model_id", "model_blob_sha1", "forecast_generated_at_utc", "projection_mean", "probability_method_status", "role_uncertainty", "source_status"],
+      "properties": {
+        "model_id": {"const": "ALPHAPROPS-AP-RB1-2026-09-23"},
+        "model_blob_sha1": {"const": "a2052512b20fa25ebba439ce463d097926c47459"},
+        "forecast_generated_at_utc": {"type": "string", "format": "date-time"},
+        "projection_mean": {"type": "number"},
+        "distribution_method_id": {"type": ["string", "null"]},
+        "probability_method_status": {"enum": ["FROZEN", "EXPERIMENTAL", "NOT_FROZEN"]},
+        "alpha_probability_point": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "alpha_probability_low": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "alpha_probability_high": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "push_probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "role_uncertainty": {"enum": ["LOW", "MODERATE", "HIGH", "UNRESOLVED"]},
+        "source_status": {"enum": ["COMPLETE", "PARTIAL", "CONFLICT", "BLOCKED"]},
+        "forecast_snapshot_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "alpha_price": {
+      "type": "object",
+      "required": ["quote_id", "break_even_probability", "quote_age_seconds", "decision", "reason_codes", "execution_status"],
+      "properties": {
+        "quote_id": {"type": "string"},
+        "break_even_probability": {"type": "number", "minimum": 0, "maximum": 1},
+        "no_vig_market_probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "raw_edge": {"type": ["number", "null"]},
+        "conservative_probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "conservative_edge": {"type": ["number", "null"]},
+        "expected_value_per_unit": {"type": ["number", "null"]},
+        "fair_american_odds": {"type": ["number", "null"]},
+        "price_boundary_american": {"type": ["number", "null"]},
+        "quote_age_seconds": {"type": "integer", "minimum": 0},
+        "decision": {"enum": ["PICK", "WATCH", "EXPERIMENTAL", "PASS"]},
+        "reason_codes": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "execution_status": {"const": "DISABLED_SHADOW_ONLY"}
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": ["decision_id", "locked_at_utc", "event", "player", "market", "quote_id", "forecast", "alpha_price", "universe_snapshot_id"],
+      "properties": {
+        "decision_id": {"type": "string"},
+        "locked_at_utc": {"type": "string", "format": "date-time"},
+        "universe_snapshot_id": {"type": "string"},
+        "event": {"$ref": "#/$defs/event"},
+        "player": {"$ref": "#/$defs/player"},
+        "market": {"$ref": "#/$defs/market"},
+        "quote_id": {"type": "string"},
+        "forecast": {"$ref": "#/$defs/forecast"},
+        "alpha_price": {"$ref": "#/$defs/alpha_price"}
+      },
+      "additionalProperties": false
+    },
+    "grade": {
+      "type": "object",
+      "required": ["grade_id", "decision_id", "graded_at_utc", "official_stat_source", "final_stat_value", "settlement_outcome", "not_executed"],
+      "properties": {
+        "grade_id": {"type": "string"},
+        "decision_id": {"type": "string"},
+        "graded_at_utc": {"type": "string", "format": "date-time"},
+        "official_stat_source": {"type": "string"},
+        "official_stat_source_ref": {"type": "string"},
+        "final_stat_value": {"type": "number"},
+        "settlement_outcome": {"enum": ["WIN", "LOSS", "PUSH", "VOID"]},
+        "shadow_return_units": {"type": ["number", "null"]},
+        "close_quote_id": {"type": ["string", "null"]},
+        "clv_status": {"enum": ["COMPARABLE_SAME_LINE", "LINE_MOVED_NOT_DIRECTLY_COMPARABLE", "CLOSE_QUOTE_UNAVAILABLE", "NOT_APPLICABLE"]},
+        "same_line_market_probability_delta": {"type": ["number", "null"]},
+        "line_delta": {"type": ["number", "null"]},
+        "not_executed": {"const": true}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
