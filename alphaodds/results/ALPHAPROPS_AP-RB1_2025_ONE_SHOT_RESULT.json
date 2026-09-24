@@ -1,0 +1,47 @@
+{
+  "result_id": "ALPHAPROPS-AP-RB1-2025-ONE-SHOT-RESULT",
+  "freeze_id": "ALPHAPROPS-AP-RB1-2026-09-23",
+  "status": "PASS_2025_ONE_SHOT_RESEARCH_HOLDOUT",
+  "workflow_run": 35948024639,
+  "workflow_head_sha": "74b54e330fa21b8fef90f47f584ed6438d3265a6",
+  "artifact_sha256": "69ebb711c701f25863da376e6f8379a9e2907b10b40e4fffc6d16bcc897de3c0",
+  "report_sha256": "5134a25d4103f5f5c4fa4907c6b559748a35d6cd2026ab89d7058eeaedc7ef29",
+  "result_markdown_sha256": "e733ba7c147c1e49873b90e6575a3eb8ddcfceeb4b6d910f6e253522e1b5db5e",
+  "one_shot_execution_count": 1,
+  "preexisting_2025_repository_exposure_caveat": "PRESERVED: Drive source-import workbook previously contained '2025 Holdout - OPENED ONCE'; 2025 is not described as pristine.",
+  "frozen_integrity": {
+    "model_blob_sha1": "a2052512b20fa25ebba439ce463d097926c47459",
+    "freeze_manifest_blob_sha1": "956be9fb0becd6b7dfc56ab8cc86a253a418b5c8",
+    "specification_changes": "NONE",
+    "threshold_changes": "NONE",
+    "data_split_changes": "NONE",
+    "post_holdout_tuning": "NONE",
+    "retroactive_model_repair": "NONE"
+  },
+  "source_gate": {
+    "2021_2024_receipts": "PASS_24_OF_24",
+    "2025_receipts": "PASS_6_OF_6_SHA256_VERIFIED",
+    "same_week_leakage": "PASS"
+  },
+  "targets": [
+    {"position":"QB","target":"passing_yards","n":619,"mae":69.2099762338634,"rmse":87.94714839105953,"median_ae":56.535983062643766,"coverage":0.8222940226171244,"stability_ratio":1.052341817786195,"lag1_snap_nonmissing":0.9967689822294022,"gate":"PASS"},
+    {"position":"RB","target":"rushing_yards","n":1476,"mae":20.08655305662692,"rmse":29.094380793271654,"median_ae":13.44705180909101,"coverage":0.8204607046070461,"stability_ratio":1.1252266485615043,"lag1_snap_nonmissing":0.9959349593495935,"gate":"PASS"},
+    {"position":"WR","target":"receiving_yards","n":2370,"mae":20.9266153002363,"rmse":28.57316788554555,"median_ae":15.68226337794897,"coverage":0.8337552742616033,"stability_ratio":1.180001937383779,"lag1_snap_nonmissing":0.9890295358649789,"gate":"PASS"},
+    {"position":"WR","target":"receptions","n":2370,"mae":1.3591973192618785,"rmse":1.8145857648946535,"median_ae":1.0592714053370256,"coverage":0.8417721518987342,"stability_ratio":1.1710082174108296,"lag1_snap_nonmissing":0.9890295358649789,"gate":"PASS"},
+    {"position":"TE","target":"receiving_yards","n":1218,"mae":15.810015943033568,"rmse":21.78707533281134,"median_ae":11.523306219531316,"coverage":0.8004926108374384,"stability_ratio":1.06290616366616,"lag1_snap_nonmissing":0.9901477832512315,"gate":"PASS"},
+    {"position":"TE","target":"receptions","n":1218,"mae":1.2608882049654386,"rmse":1.7295443133268593,"median_ae":0.9171416628442199,"coverage":0.7996715927750411,"stability_ratio":1.009247775590527,"lag1_snap_nonmissing":0.9901477832512315,"gate":"PASS"}
+  ],
+  "cca15": {
+    "decision": "PASS",
+    "broad_snap_join_67_9pct_vs_position_identity_99_57pct": "EXPLAINABLE_PROCEDURAL_DIFFERENCE: broad all-position raw-team join versus position-scoped deterministic identity gate; actual holdout target rows retain 98.9%-99.7% lagged snap availability.",
+    "profitability_claim": "PROHIBITED_NO_AUTHENTICATED_HISTORICAL_PROP_PRICE_EVIDENCE"
+  },
+  "defense_red_team": {
+    "decision": "PASS_RESEARCH_HOLDOUT_ONLY",
+    "holdout_pristine_claim": "PROHIBITED",
+    "new_thresholds": "NONE",
+    "model_repair": "NONE",
+    "wager_execution": "DISABLED"
+  },
+  "freeze_effect": "AP_RB1_SURVIVES_2025_ONE_SHOT_AS_RESEARCH_BASELINE_NO_BETTING_EDGE_CLAIM"
+}
