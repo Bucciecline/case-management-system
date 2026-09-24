@@ -1,0 +1,60 @@
+name: alphaprops-2021-2024-gate
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alpha_props_gate.py'
+      - '.github/workflows/alphaprops-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  alphaprops-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install frozen runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3 scikit-learn==1.5.2
+
+      - name: Execute authenticated AlphaProps gate
+        id: gate
+        continue-on-error: true
+        run: |
+          python alphaodds/build/alpha_props_gate.py 2>&1 | tee alphaodds_gate.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Capture environment receipt
+        run: |
+          python --version > alphaodds_runtime_environment.txt
+          python -m pip freeze >> alphaodds_runtime_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaodds_runtime_environment.txt
+          echo "gate_exit_code=${{ steps.gate.outputs.exit_code }}" >> alphaodds_runtime_environment.txt
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprops-2021-2024-gate
+          path: |
+            alphaodds_runtime/out/**
+            alphaodds_gate.log
+            alphaodds_runtime_environment.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Preserve gate result
+        run: |
+          code="${{ steps.gate.outputs.exit_code }}"
+          if [ "$code" != "0" ]; then
+            echo "AlphaProps gate returned HOLD/FAIL code $code"
+            exit "$code"
+          fi
