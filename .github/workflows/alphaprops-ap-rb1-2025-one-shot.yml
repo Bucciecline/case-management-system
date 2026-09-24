@@ -1,0 +1,59 @@
+name: alphaprops-ap-rb1-2025-one-shot
+
+on:
+  push:
+    paths:
+      - 'alphaodds/holdout/alpha_props_holdout_2025.py'
+      - '.github/workflows/alphaprops-ap-rb1-2025-one-shot.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  one-shot-holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install frozen runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3 scikit-learn==1.5.2
+
+      - name: Execute AP-RB1 2025 one-shot holdout
+        id: gate
+        continue-on-error: true
+        run: |
+          python alphaodds/holdout/alpha_props_holdout_2025.py 2>&1 | tee alphaprops_2025_one_shot.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphaprops_2025_environment.txt
+          python -m pip freeze >> alphaprops_2025_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaprops_2025_environment.txt
+          echo "gate_exit_code=${{ steps.gate.outputs.exit_code }}" >> alphaprops_2025_environment.txt
+
+      - name: Upload holdout audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprops-ap-rb1-2025-one-shot
+          path: |
+            alphaodds_holdout_runtime/out/**
+            alphaprops_2025_one_shot.log
+            alphaprops_2025_environment.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Preserve one-shot result
+        run: |
+          code="${{ steps.gate.outputs.exit_code }}"
+          if [ "$code" != "0" ]; then
+            echo "AP-RB1 2025 one-shot returned HOLD/FAIL code $code"
+            exit "$code"
+          fi
