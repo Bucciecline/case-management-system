@@ -1,0 +1,54 @@
+name: alphaprops-identity-coverage-gate
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alpha_props_identity_gate.py'
+      - '.github/workflows/alphaprops-identity-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  identity-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install identity-audit dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas==2.2.3
+      - name: Run AlphaProps identity coverage gate
+        id: gate
+        continue-on-error: true
+        run: |
+          python alphaodds/build/alpha_props_identity_gate.py 2>&1 | tee alphaprops_identity_gate.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphaprops_identity_environment.txt
+          python -m pip freeze >> alphaprops_identity_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaprops_identity_environment.txt
+          echo "gate_exit_code=${{ steps.gate.outputs.exit_code }}" >> alphaprops_identity_environment.txt
+      - name: Upload identity audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprops-identity-coverage-gate
+          path: |
+            alphaodds_identity_runtime/out/**
+            alphaprops_identity_gate.log
+            alphaprops_identity_environment.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve gate result
+        run: |
+          code="${{ steps.gate.outputs.exit_code }}"
+          if [ "$code" != "0" ]; then
+            echo "AlphaProps identity gate returned HOLD/FAIL code $code"
+            exit "$code"
+          fi
