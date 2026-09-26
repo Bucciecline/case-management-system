@@ -1,0 +1,41 @@
+name: winner-dna-team-chaos
+
+on:
+  push:
+    paths:
+      - 'alphaodds/winner_dna/team_chaos_gate.py'
+      - '.github/workflows/winner-dna-team-chaos.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  team-chaos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+
+      - name: Run Winner DNA team chaos-separation gate
+        run: |
+          python alphaodds/winner_dna/team_chaos_gate.py 2>&1 | tee winner_dna_team_chaos.log
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: winner-dna-team-chaos-2026-09-26
+          path: |
+            alphaodds/winner_dna/outputs/team_chaos/**
+            winner_dna_team_chaos.log
+          if-no-files-found: error
+          retention-days: 30
