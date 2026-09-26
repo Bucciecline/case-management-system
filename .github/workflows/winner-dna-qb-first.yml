@@ -1,0 +1,41 @@
+name: winner-dna-qb-first
+
+on:
+  push:
+    paths:
+      - 'alphaodds/winner_dna/qb_first_gate.py'
+      - '.github/workflows/winner-dna-qb-first.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qb-first:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+
+      - name: Run Winner DNA QB-first gate
+        run: |
+          python alphaodds/winner_dna/qb_first_gate.py 2>&1 | tee winner_dna_qb_first.log
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: winner-dna-qb-first-2026-09-26
+          path: |
+            alphaodds/winner_dna/outputs/**
+            winner_dna_qb_first.log
+          if-no-files-found: error
+          retention-days: 30
