@@ -1,0 +1,38 @@
+name: winner-dna-week3-bootstrap-shadow
+
+on:
+  push:
+    paths:
+      - 'alphaodds/winner_dna/week3_bootstrap_shadow.py'
+      - '.github/workflows/winner-dna-week3-bootstrap-shadow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+      - name: Run Week 3 bootstrap shadow gate
+        run: |
+          set -o pipefail
+          python alphaodds/winner_dna/week3_bootstrap_shadow.py 2>&1 | tee week3_bootstrap.log
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: winner-dna-week3-bootstrap-shadow-2026-09-26
+          path: |
+            alphaodds/winner_dna/outputs/week3_bootstrap_shadow/**
+            week3_bootstrap.log
+          if-no-files-found: error
+          retention-days: 30
