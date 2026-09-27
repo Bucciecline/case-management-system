@@ -36,7 +36,7 @@ def main():
   for gid,g in d.groupby('game_id',sort=False):
    ht=g.home_team.dropna().iloc[0] if g.home_team.notna().any() else None; at=g.away_team.dropna().iloc[0] if g.away_team.notna().any() else None
    if not ht or not at: continue
-   h2,a2=scores_at_end(g,2); h3,a3=scores_at_end(g,3); hf={ht:h2-at if pd.notna(h2) and pd.notna(a2) else np.nan,at:a2-h2 if pd.notna(h2) and pd.notna(a2) else np.nan}; q3={ht:h3-a3 if pd.notna(h3) and pd.notna(a3) else np.nan,at:a3-h3 if pd.notna(h3) and pd.notna(a3) else np.nan}
+   h2,a2=scores_at_end(g,2); h3,a3=scores_at_end(g,3); hf={ht:h2-a2 if pd.notna(h2) and pd.notna(a2) else np.nan,at:a2-h2 if pd.notna(h2) and pd.notna(a2) else np.nan}; q3={ht:h3-a3 if pd.notna(h3) and pd.notna(a3) else np.nan,at:a3-h3 if pd.notna(h3) and pd.notna(a3) else np.nan}
    last=g.iloc[-1]; hs,as_=last.total_home_score,last.total_away_score; winner=ht if hs>as_ else at if as_>hs else None
    q4=g[g.qtr.eq(4) & g.posteam.notna() & g.epa.notna()]
    q4epa=q4.groupby('posteam').epa.mean().to_dict()
