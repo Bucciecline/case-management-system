@@ -1,0 +1,38 @@
+name: winner-dna-two-tier-freeze
+
+on:
+  push:
+    paths:
+      - 'alphaodds/winner_dna/two_tier_prospective_freeze.py'
+      - '.github/workflows/winner-dna-two-tier-freeze.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+      - name: Run two-tier freeze
+        run: |
+          set -o pipefail
+          python alphaodds/winner_dna/two_tier_prospective_freeze.py 2>&1 | tee two_tier_freeze.log
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: winner-dna-two-tier-freeze-2026-09-26
+          path: |
+            alphaodds/winner_dna/outputs/two_tier_freeze/**
+            two_tier_freeze.log
+          if-no-files-found: error
+          retention-days: 30
