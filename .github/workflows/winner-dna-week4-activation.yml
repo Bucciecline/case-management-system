@@ -1,0 +1,38 @@
+name: winner-dna-week4-activation
+
+on:
+  push:
+    paths:
+      - 'alphaodds/winner_dna/week4_activation_preflight.py'
+      - '.github/workflows/winner-dna-week4-activation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas==2.2.3
+      - name: Run Week 4 activation preflight
+        run: |
+          set -o pipefail
+          python alphaodds/winner_dna/week4_activation_preflight.py 2>&1 | tee week4_activation.log
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: winner-dna-week4-activation-preflight-2026-09-26
+          path: |
+            alphaodds/winner_dna/outputs/week4_activation/**
+            week4_activation.log
+          if-no-files-found: error
+          retention-days: 30
