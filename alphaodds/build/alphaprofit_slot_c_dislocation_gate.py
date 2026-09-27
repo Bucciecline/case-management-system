@@ -322,8 +322,11 @@ def summarize(rows: pd.DataFrame):
     ph = p[p["pair_hit"]]
     th = t[t["triple_hit"]]
     c_only = t[t["slot_c_hit"] & ~t["pair_hit"]]
-    passing_residual = t[t["favorite_first_td"] & ~t["pair_hit"] & t["actual_first_td_play_type"].astype(str).str.lower().eq("pass")]
-    c_pass_recovery = passing_residual[passing_residual["slot_c_hit"]]
+    pass_play_residual = t[t["favorite_first_td"] & ~t["pair_hit"] & t["actual_first_td_play_type"].astype(str).str.lower().eq("pass")]
+    offensive_receiver_residual = pass_play_residual[pass_play_residual["actual_first_td_position"].isin(["WR", "TE"])]
+    rb_receiving_residual = pass_play_residual[pass_play_residual["actual_first_td_position"].eq("RB")]
+    defensive_or_other_pass_residual = pass_play_residual[~pass_play_residual["actual_first_td_position"].isin(["WR", "TE", "RB"])]
+    c_pass_recovery = offensive_receiver_residual[offensive_receiver_residual["slot_c_hit"]]
     return {
         "pair_eligible_games": int(len(p)),
         "triple_eligible_games": int(len(t)),
@@ -339,9 +342,12 @@ def summarize(rows: pd.DataFrame):
         "slot_c_hits": int(t["slot_c_hit"].sum()) if len(t) else 0,
         "slot_c_incremental_hits": int(len(c_only)),
         "slot_c_incremental_hit_rate": None if len(t) == 0 else float(len(c_only) / len(t)),
-        "passing_route_pair_misses": int(len(passing_residual)),
-        "slot_c_passing_miss_recoveries": int(len(c_pass_recovery)),
-        "passing_miss_recovery_rate": None if len(passing_residual) == 0 else float(len(c_pass_recovery) / len(passing_residual)),
+        "pass_play_pair_misses": int(len(pass_play_residual)),
+        "offensive_wr_te_pair_misses": int(len(offensive_receiver_residual)),
+        "rb_receiving_pair_misses": int(len(rb_receiving_residual)),
+        "defensive_or_other_pass_play_misses": int(len(defensive_or_other_pass_residual)),
+        "slot_c_wr_te_miss_recoveries": int(len(c_pass_recovery)),
+        "wr_te_miss_recovery_rate": None if len(offensive_receiver_residual) == 0 else float(len(c_pass_recovery) / len(offensive_receiver_residual)),
     }
 
 
@@ -381,6 +387,7 @@ def main():
                 C, cdiag = None, {}
             actual = first_td.get(game_id, {})
             actual_team, actual_player = actual.get("team"), actual.get("player_id")
+            actual_position = active.get(actual_player) if actual_player else None
             pair_eligible = bool(A and B)
             triple_eligible = bool(A and B and C)
             favorite_first = bool(actual_team == favorite)
@@ -406,7 +413,8 @@ def main():
                 "slot_c_recent_i10_target_share": cdiag.get("recent_i10_target_share") if C else None,
                 "slot_c_explosive_rec_td_8g": cdiag.get("explosive_rec_td_8g") if C else None,
                 "actual_first_td_team": actual_team, "actual_first_td_player_id": actual_player,
-                "actual_first_td_player_name": actual.get("player_name"), "actual_first_td_play_type": actual.get("play_type"),
+                "actual_first_td_player_name": actual.get("player_name"), "actual_first_td_position": actual_position,
+                "actual_first_td_play_type": actual.get("play_type"),
                 "favorite_first_td": favorite_first, "slot_a_hit": a_hit, "slot_b_hit": b_hit, "slot_c_hit": c_hit,
                 "pair_hit": bool(a_hit or b_hit), "triple_eligible": triple_eligible, "triple_hit": bool(a_hit or b_hit or c_hit),
             })
@@ -460,9 +468,12 @@ def main():
         f"Pair hit rate on same population: {overall['pair_overall_hit_rate_same_population']}\n"
         f"Triple hit rate: {overall['triple_overall_hit_rate']}\n"
         f"Slot C incremental hits: {overall['slot_c_incremental_hits']}\n"
-        f"Passing-route pair misses: {overall['passing_route_pair_misses']}\n"
-        f"Slot C passing-miss recoveries: {overall['slot_c_passing_miss_recoveries']}\n"
-        f"Passing-miss recovery rate: {overall['passing_miss_recovery_rate']}\n\n"
+        f"Pass-play pair misses: {overall['pass_play_pair_misses']}\n"
+        f"Offensive WR/TE pair misses: {overall['offensive_wr_te_pair_misses']}\n"
+        f"RB receiving pair misses: {overall['rb_receiving_pair_misses']}\n"
+        f"Defensive/other pass-play misses: {overall['defensive_or_other_pass_play_misses']}\n"
+        f"Slot C WR/TE miss recoveries: {overall['slot_c_wr_te_miss_recoveries']}\n"
+        f"WR/TE miss recovery rate: {overall['wr_te_miss_recovery_rate']}\n\n"
         "No profitability, EV, ROI, or wager-execution claim is authorized by this gate.\n",
         encoding="utf-8",
     )
