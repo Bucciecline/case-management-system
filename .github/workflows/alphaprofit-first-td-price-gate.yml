@@ -1,0 +1,43 @@
+name: alphaprofit-first-td-price-gate
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alphaprofit_first_td_price_gate.py'
+      - '.github/workflows/alphaprofit-first-td-price-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  first-td-price-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+      - name: Execute historical first-TD price gate
+        run: |
+          python alphaodds/build/alphaprofit_first_td_price_gate.py 2>&1 | tee alphaprofit_first_td_price_gate.log
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphaprofit_first_td_price_environment.txt
+          python -m pip freeze >> alphaprofit_first_td_price_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaprofit_first_td_price_environment.txt
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprofit-first-td-price-gate
+          path: |
+            alphaprofit_price_runtime/out/**
+            alphaprofit_first_td_price_gate.log
+            alphaprofit_first_td_price_environment.txt
+          if-no-files-found: error
+          retention-days: 30
