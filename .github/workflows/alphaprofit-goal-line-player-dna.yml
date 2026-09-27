@@ -1,0 +1,48 @@
+name: alphaprofit-goal-line-player-dna
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alpha_profit_goal_line_gate.py'
+      - '.github/workflows/alphaprofit-goal-line-player-dna.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  goal-line-player-dna:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install frozen runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+
+      - name: Execute AlphaProfit goal-line player DNA gate
+        run: |
+          python alphaodds/build/alpha_profit_goal_line_gate.py 2>&1 | tee alphaprofit_goal_line_gate.log
+
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphaprofit_goal_line_environment.txt
+          python -m pip freeze >> alphaprofit_goal_line_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaprofit_goal_line_environment.txt
+
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprofit-goal-line-player-dna
+          path: |
+            alphaprofit_goal_line_runtime/out/**
+            alphaprofit_goal_line_gate.log
+            alphaprofit_goal_line_environment.txt
+          if-no-files-found: error
+          retention-days: 30
