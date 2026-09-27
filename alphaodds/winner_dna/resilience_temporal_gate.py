@@ -26,9 +26,9 @@ def main():
  allg=[]; receipts=[]
  for y in Y:
   p=R/f'pbp{y}.csv'; u=f'https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_{y}.csv'; dl(u,p); z=sha(p); assert z==H[y]
-  hd=pd.read_csv(p,nrows=0).columns.tolist(); want=['game_id','qtr','posteam','home_team','away_team','total_home_score','total_away_score','fixed_drive','drive','posteam_score','posteam_score_post','epa','pass','rush','no_play','qb_kneel','qb_spike']
+  hd=pd.read_csv(p,nrows=0).columns.tolist(); want=['game_id','week','game_date','qtr','posteam','home_team','away_team','total_home_score','total_away_score','fixed_drive','drive','posteam_score','posteam_score_post','epa','pass','rush','no_play','qb_kneel','qb_spike']
   use=[c for c in want if c in hd]; d=pd.read_csv(p,usecols=use,low_memory=False); d['posteam']=d.posteam.map(ct); d['home_team']=d.home_team.map(ct); d['away_team']=d.away_team.map(ct)
-  for c in ['qtr','total_home_score','total_away_score','posteam_score','posteam_score_post','epa','pass','rush','no_play','qb_kneel','qb_spike']:
+  for c in ['week','qtr','total_home_score','total_away_score','posteam_score','posteam_score_post','epa','pass','rush','no_play','qb_kneel','qb_spike']:
    if c in d: d[c]=pd.to_numeric(d[c],errors='coerce')
   if 'no_play' in d:d=d[d.no_play.fillna(0).eq(0)]
   receipts.append({'season':y,'sha256':z,'rows':len(d),'columns':use})
@@ -36,6 +36,8 @@ def main():
   for gid,g in d.groupby('game_id',sort=False):
    ht=g.home_team.dropna().iloc[0] if g.home_team.notna().any() else None; at=g.away_team.dropna().iloc[0] if g.away_team.notna().any() else None
    if not ht or not at: continue
+   wk=int(pd.to_numeric(g['week'],errors='coerce').dropna().iloc[0]) if 'week' in g and pd.to_numeric(g['week'],errors='coerce').notna().any() else None
+   gd=pd.to_datetime(g['game_date'].dropna().iloc[0]) if 'game_date' in g and g['game_date'].notna().any() else pd.to_datetime(str(gid)[:10].replace('_','-'),errors='coerce')
    h2,a2=scores_at_end(g,2); h3,a3=scores_at_end(g,3); hf={ht:h2-a2 if pd.notna(h2) and pd.notna(a2) else np.nan,at:a2-h2 if pd.notna(h2) and pd.notna(a2) else np.nan}; q3={ht:h3-a3 if pd.notna(h3) and pd.notna(a3) else np.nan,at:a3-h3 if pd.notna(h3) and pd.notna(a3) else np.nan}
    last=g.iloc[-1]; hs,as_=last.total_home_score,last.total_away_score; winner=ht if hs>as_ else at if as_>hs else None
    q4=g[g.qtr.eq(4) & g.posteam.notna() & g.epa.notna()]
@@ -54,9 +56,9 @@ def main():
      if drives[i-1][1]!=drives[i][1] and drives[i-1][2]>0:
       team=drives[i][1]; resp.setdefault(team,[0,0]); resp[team][1]+=1; resp[team][0]+=int(drives[i][2]>0)
    for team,opp in [(ht,at),(at,ht)]:
-    allg.append({'game_id':gid,'season':y,'team':team,'opp':opp,'win':1.0 if winner==team else 0.0,'halftime_deficit':pd.notna(hf[team]) and hf[team]<0,'close_q4':pd.notna(q3[team]) and abs(q3[team])<=8,'q4_epa':q4epa.get(team,np.nan),'response_success':resp.get(team,[0,0])[0],'response_opps':resp.get(team,[0,0])[1]})
+    allg.append({'game_id':gid,'season':y,'week':wk,'gameday':gd,'team':team,'opp':opp,'win':1.0 if winner==team else 0.0,'halftime_deficit':pd.notna(hf[team]) and hf[team]<0,'close_q4':pd.notna(q3[team]) and abs(q3[team])<=8,'q4_epa':q4epa.get(team,np.nan),'response_success':resp.get(team,[0,0])[0],'response_opps':resp.get(team,[0,0])[1]})
   p.unlink(missing_ok=True)
- t=pd.DataFrame(allg).merge(pd.read_csv('alphaodds/winner_dna/outputs/root_cause_phase1/WINNER_DNA_OPPONENT_ADJUSTED_GAME_AUDIT.csv')[['game_id','gameday','week']].drop_duplicates(),on='game_id',how='left'); t.gameday=pd.to_datetime(t.gameday); t=t.sort_values(['team','season','gameday','game_id'])
+ t=pd.DataFrame(allg); t.gameday=pd.to_datetime(t.gameday); t=t.sort_values(['team','season','gameday','game_id'])
  hist=defaultdict(lambda:deque(maxlen=8)); out=[]
  for r in t.itertuples(index=False):
   pr=list(hist[(r.team,r.season)]); z=r._asdict()
