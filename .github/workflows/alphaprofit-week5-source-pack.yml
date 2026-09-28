@@ -1,0 +1,43 @@
+name: alphaprofit-week5-source-pack
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alphaprofit_week5_2026_source_pack.py'
+      - '.github/workflows/alphaprofit-week5-source-pack.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  week5-source-pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+      - name: Build Week 5 prospective source pack
+        run: |
+          python alphaodds/build/alphaprofit_week5_2026_source_pack.py 2>&1 | tee alphaprofit_week5_source_pack.log
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphaprofit_week5_source_pack_environment.txt
+          python -m pip freeze >> alphaprofit_week5_source_pack_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaprofit_week5_source_pack_environment.txt
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprofit-week5-source-pack
+          path: |
+            alphaprofit_week5_runtime/out/**
+            alphaprofit_week5_source_pack.log
+            alphaprofit_week5_source_pack_environment.txt
+          if-no-files-found: error
+          retention-days: 30
