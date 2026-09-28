@@ -1,0 +1,43 @@
+name: alphacreative-price-hurdle
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alphacreative_price_hurdle_gate.py'
+      - '.github/workflows/alphacreative-price-hurdle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  price-hurdle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+      - name: Execute AlphaCreative price hurdle gate
+        run: |
+          python alphaodds/build/alphacreative_price_hurdle_gate.py 2>&1 | tee alphacreative_price_hurdle_gate.log
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphacreative_price_hurdle_environment.txt
+          python -m pip freeze >> alphacreative_price_hurdle_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphacreative_price_hurdle_environment.txt
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphacreative-price-hurdle
+          path: |
+            alphaprofit_price_hurdle_runtime/out/**
+            alphacreative_price_hurdle_gate.log
+            alphacreative_price_hurdle_environment.txt
+          if-no-files-found: error
+          retention-days: 30
