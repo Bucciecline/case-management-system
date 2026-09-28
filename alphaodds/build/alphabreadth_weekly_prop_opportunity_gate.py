@@ -197,10 +197,13 @@ def main():
     name_col="full_name" if "full_name" in r26.columns else ("player_name" if "player_name" in r26.columns else None)
 
     # Recent participation gate from 2026 regular-season stats before target week.
+    team_col_2026="recent_team" if "recent_team" in st.columns else ("team" if "team" in st.columns else None)
+    if team_col_2026 is None:
+        raise RuntimeError("No usable team column in weekly stats")
     recent26=st[
         st["season"].eq(TARGET_SEASON)
         & st["week"].lt(target_week)
-        & st["recent_team"].astype(str).isin(teams)
+        & st[team_col_2026].astype(str).isin(teams)
     ].copy()
     recent26=recent26.sort_values(["player_id","week"])
     recent_usage={}
