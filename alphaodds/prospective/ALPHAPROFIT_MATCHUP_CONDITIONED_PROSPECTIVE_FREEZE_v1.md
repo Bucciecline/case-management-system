@@ -76,3 +76,50 @@ Three prospective lanes are frozen:
 - The 8+ or 10+ lanes may only replace the baseline after a prospectively defined checkpoint with sufficient sample.
 - Matchup, injury, A/B/C, price, and stake controls remain identical across lanes.
 - No profitability claim is permitted from historical threshold differences alone.
+
+
+## Matchup-Conditioned Price Hurdles — frozen 2026-09-27
+
+These hurdles are retrospective reference points only and are frozen for prospective shadow classification. They do not establish profitability.
+
+### Classification
+- **CORE_PASS** — actual timestamped pre-kickoff odds are at or above the conservative 95% Wilson hurdle, and the historical cell has at least 20 reference games.
+- **RAW_PASS_ONLY** — actual odds clear the raw break-even hurdle but not the conservative hurdle; shadow only.
+- **PRICE_FAIL** — actual odds are below the raw break-even hurdle.
+- **NO_REFERENCE** — fewer than 20 reference games, zero historical hits, or no usable route cell.
+- **NO_PRICE** — missing authenticated pre-kickoff price; never impute.
+
+### Moderate-support reference cells
+
+#### T7 BASE — GROUND
+- Slot A: raw +345; conservative +668; n=49.
+- Slot B: raw +1533; conservative +4653; n=49.
+- Slot C: raw +1533; conservative +4653; n=49.
+
+#### T7 BASE — WRTE_REC
+- Slot A: raw +500; conservative +772; n=144.
+- Slot B: raw +1957; conservative +4112; n=144.
+- Slot C: raw +1500; conservative +2910; n=144.
+
+#### T8 ALIGNED — WRTE_REC
+- Slot A: raw +480; conservative +937; n=58.
+- Slot B: raw +1350; conservative +3584; n=58.
+- Slot C: raw +1060; conservative +2575; n=58.
+
+### Shadow-only / no automatic CORE_PASS
+- T8 ALIGNED — GROUND: n=18, sparse.
+- T10 ALIGNED — GROUND: n=11, sparse.
+- T10 ALIGNED — WRTE_REC: n=38, thin.
+- RB_REC matchup-route cells: no usable historical reference in the current taxonomy.
+
+### Prospective rule
+For every future qualifier:
+1. determine T7/T8/T10 membership;
+2. determine matchup alignment and matchup route;
+3. freeze A/B/Dynamic-C;
+4. record authenticated pre-kickoff prices;
+5. classify each ticket CORE_PASS / RAW_PASS_ONLY / PRICE_FAIL / NO_REFERENCE / NO_PRICE before kickoff;
+6. shadow-grade all classifications after the outcome;
+7. do not alter hurdles until a predeclared prospective checkpoint.
+
+The price gate may remove or downgrade a ticket, but it may not increase the $100 research-unit cap or create a fourth ticket.
