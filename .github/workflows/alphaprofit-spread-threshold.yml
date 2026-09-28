@@ -1,0 +1,43 @@
+name: alphaprofit-spread-threshold
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alphaprofit_spread_threshold_gate.py'
+      - '.github/workflows/alphaprofit-spread-threshold.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spread-threshold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+      - name: Execute spread threshold robustness gate
+        run: |
+          python alphaodds/build/alphaprofit_spread_threshold_gate.py 2>&1 | tee alphaprofit_spread_threshold_gate.log
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphaprofit_spread_threshold_environment.txt
+          python -m pip freeze >> alphaprofit_spread_threshold_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaprofit_spread_threshold_environment.txt
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprofit-spread-threshold
+          path: |
+            alphaprofit_spread_runtime/out/**
+            alphaprofit_spread_threshold_gate.log
+            alphaprofit_spread_threshold_environment.txt
+          if-no-files-found: error
+          retention-days: 30
