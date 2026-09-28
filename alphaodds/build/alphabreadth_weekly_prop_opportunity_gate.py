@@ -177,18 +177,60 @@ def main():
     target_week=int(target_games["week"].mode().iloc[0])
     teams=set(target_games["home_team"].astype(str))|set(target_games["away_team"].astype(str))
 
-    # latest available roster state at or before target week, one row per player/team
-    r26=rr[rr["season"].eq(TARGET_SEASON) & rr["team"].astype(str).isin(teams)].copy()
-    r26=r26[r26["position"].astype(str).str.upper().isin(POSITIONS)]
-    r26=r26.sort_values(["team","gsis_id","week"]).drop_duplicates(["team","gsis_id"],keep="last")
+    # Target-week roster only when available. If the feed has not yet published
+    # target week, fall back to the latest week before it and disclose that fact.
+    r26_all=rr[rr["season"].eq(TARGET_SEASON) & rr["team"].astype(str).isin(teams)].copy()
+    r26_all=r26_all[r26_all["position"].astype(str).str.upper().isin(POSITIONS)]
+    weeks=sorted(int(x) for x in pd.to_numeric(r26_all["week"],errors="coerce").dropna().unique() if int(x) <= target_week)
+    roster_week=max(weeks) if weeks else None
+    if roster_week is None:
+        raise RuntimeError("No usable 2026 weekly roster week")
+    r26=r26_all[pd.to_numeric(r26_all["week"],errors="coerce").eq(roster_week)].copy()
+    if "status" in r26.columns:
+        # nflverse status naming can vary; keep recognized active-like values,
+        # otherwise rely on the recent-usage gate below.
+        status_norm=r26["status"].astype(str).str.upper()
+        active_mask=status_norm.isin(["ACT","ACTIVE","A","NORMAL"]) | status_norm.str.contains("ACTIVE",na=False)
+        if active_mask.any():
+            r26=r26[active_mask].copy()
+    r26=r26.drop_duplicates(["team","gsis_id"],keep="last")
     name_col="full_name" if "full_name" in r26.columns else ("player_name" if "player_name" in r26.columns else None)
+
+    # Recent participation gate from 2026 regular-season stats before target week.
+    recent26=st[
+        st["season"].eq(TARGET_SEASON)
+        & st["week"].lt(target_week)
+        & st["recent_team"].astype(str).isin(teams)
+    ].copy()
+    recent26=recent26.sort_values(["player_id","week"])
+    recent_usage={}
+    for pid,gp in recent26.groupby("player_id"):
+        tail=gp.tail(3)
+        def sm(col):
+            return float(pd.to_numeric(tail[col],errors="coerce").fillna(0).sum()) if col in tail.columns else 0.0
+        recent_usage[str(pid)]={
+            "attempts":sm("attempts"),"carries":sm("carries"),"targets":sm("targets"),
+            "receptions":sm("receptions"),"offense_games":int(len(tail))
+        }
 
     target_rows=[]
     existing_cols=set(st.columns)
+    participation_excluded=0
     for x in r26.itertuples(index=False):
+        pid=str(getattr(x,"gsis_id")); pos=str(getattr(x,"position")).upper()
+        u=recent_usage.get(pid,{"attempts":0.0,"carries":0.0,"targets":0.0,"receptions":0.0,"offense_games":0})
+        if pos=="QB":
+            qualifies=u["attempts"] >= 5
+        elif pos=="RB":
+            qualifies=(u["carries"] + u["targets"]) >= 3
+        else:
+            qualifies=u["targets"] >= 3
+        if not qualifies:
+            participation_excluded += 1
+            continue
         row={c:np.nan for c in existing_cols}
         row["season"]=TARGET_SEASON; row["week"]=target_week
-        row["player_id"]=str(getattr(x,"gsis_id")); row["position"]=str(getattr(x,"position")).upper()
+        row["player_id"]=pid; row["position"]=pos
         row["recent_team"]=str(getattr(x,"team")); row["team"]=str(getattr(x,"team"))
         if "player_display_name" in row: row["player_display_name"]=str(getattr(x,name_col)) if name_col else row["player_id"]
         if "player_name" in row: row["player_name"]=str(getattr(x,name_col)) if name_col else row["player_id"]
@@ -247,11 +289,14 @@ def main():
     by_market=board.groupby(["position","market"]).size().reset_index(name="projection_count")
     report={
         "gate":"ALPHABREADTH PLAYER-PROP WEEKLY OPPORTUNITY GATE",
-        "status":"PROJECTIONS_FROZEN_PRICE_HOLD",
+        "status":"ACTIVE_MARKET_PARTICIPANT_PROJECTIONS_FROZEN_PRICE_HOLD",
         "target_window":["2026-10-01","2026-10-05"],
         "target_week":target_week,
         "games":int(target_games["game_id"].nunique()),
         "projection_rows":int(len(board)),
+        "roster_week_used":int(roster_week),
+        "target_week_roster_players_before_recent_usage_gate":int(len(r26)),
+        "players_excluded_for_insufficient_recent_usage":int(participation_excluded),
         "markets":by_market.to_dict(orient="records"),
         "controls":{
             "model_spec":"AP-RB1 unchanged",
@@ -259,6 +304,8 @@ def main():
             "2024_2025_2026_model_training":"NO",
             "2024_2025_2026_usage":"past-game feature context only",
             "minimum_prior_games":3,
+            "target_week_roster_presence":"required using latest published roster week <= target week",
+            "recent_participation_gate":"QB >=5 pass attempts; RB >=3 carries+targets; WR/TE >=3 targets over most recent 3 2026 games",
             "sportsbook_lines":"not imputed; PRICE_HOLD until authenticated",
             "same_game_target_stats":"not available to synthetic target row",
             "wager_execution":"DISABLED"
