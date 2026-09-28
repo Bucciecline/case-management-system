@@ -42,3 +42,37 @@ No matchup, injury, price, or stake rule may be promoted from a single game. Pro
 
 ## External action
 Research only. No wager placement or sportsbook transmission.
+
+
+## Spread-Threshold Shadow Lanes — added 2026-09-27 before future grading
+
+The retrospective Spread-Threshold Robustness Gate tested every 0.5-point threshold from 0.5 through 14.0 across 2021-2024 regular-season games.
+
+No historical result is permitted to retroactively replace the original 7+ baseline.
+
+Three prospective lanes are frozen:
+
+### Lane T7 — Baseline
+- Qualification: favorite by at least 7.0 points.
+- Historical reference only: 296 games, 65.20% favorite-first TD.
+- Purpose: preserve continuity with the original architecture.
+
+### Lane T8 — Stability Challenger
+- Qualification: favorite by at least 8.0 points.
+- Historical reference only: 195 games, 71.28% favorite-first TD.
+- Historical season floor: 68.57%, the strongest minimum-season rate among tested thresholds with at least 100 games.
+- Purpose: test whether a modestly stricter favorite threshold improves reliability without collapsing sample size.
+
+### Lane T10 — High-Conviction Challenger
+- Qualification: favorite by at least 10.0 points.
+- Historical reference only: 134 games, 73.88% favorite-first TD.
+- Historical 95% Wilson lower bound: 65.85%, the strongest among tested thresholds with at least 100 games.
+- Purpose: test whether very strong favorites create a meaningfully better first-TD environment despite lower frequency.
+
+### Prospective adjudication
+- T7, T8, and T10 are graded simultaneously whenever applicable.
+- A game may qualify for multiple nested lanes.
+- Outcomes may not alter the lane definitions.
+- The 8+ or 10+ lanes may only replace the baseline after a prospectively defined checkpoint with sufficient sample.
+- Matchup, injury, A/B/C, price, and stake controls remain identical across lanes.
+- No profitability claim is permitted from historical threshold differences alone.
