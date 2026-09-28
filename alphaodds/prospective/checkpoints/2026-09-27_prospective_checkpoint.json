@@ -1,0 +1,44 @@
+{
+  "created_at_local": "2026-09-27T20:32:00-05:00",
+  "protocol": "ALPHAPROFIT MATCHUP-CONDITIONED PROSPECTIVE FREEZE v1.0",
+  "rams_live_diagnostic": {
+    "game": "Los Angeles Rams at Denver Broncos",
+    "status": "QUARANTINED_LIVE_DIAGNOSTIC_ONLY",
+    "pregame_spread_observed": "LAR approximately -1.5",
+    "official_team_gate": "FAIL_LT_7",
+    "puka_nacua": "OUT_PREGAME",
+    "first_td_live": "Tyler Higbee",
+    "higbee_pregame_first_td_price_range": "+1600 to +2000 from public sources",
+    "observations": [
+      "injury-driven target redistribution may be material",
+      "Kyren Williams demonstrated multipath rushing plus receiving usage",
+      "do not backfit these observations into the frozen selector"
+    ]
+  },
+  "next_game_checkpoint": {
+    "game": "Philadelphia Eagles at Chicago Bears",
+    "kickoff": "2026-09-28T20:15:00-04:00",
+    "spread_observed_range": "PHI -3.5 to -5",
+    "team_gate": "FAIL_LT_7",
+    "official_prospective_status": "NO_QUALIFIER",
+    "notable_pregame_absences": [
+      "CHI QB Caleb Williams OUT",
+      "PHI TE Dallas Goedert OUT",
+      "PHI WR Marquise Brown OUT"
+    ],
+    "player_freeze_authorized": false,
+    "price_freeze_authorized": false,
+    "shadow_stakes_authorized": false
+  },
+  "frozen_order": [
+    "TEAM_GATE_7_PLUS",
+    "MATCHUP_ALIGNMENT",
+    "INJURY_ROLE_REDISTRIBUTION_AUDIT",
+    "FREEZE_A_B_DYNAMIC_C",
+    "TIMESTAMPED_PRICE_FREEZE",
+    "SHADOW_45_45_10",
+    "SHADOW_25_25_50",
+    "POSTGAME_GRADE"
+  ],
+  "wager_execution": "DISABLED"
+}
