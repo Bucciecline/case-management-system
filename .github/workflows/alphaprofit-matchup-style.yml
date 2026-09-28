@@ -1,0 +1,43 @@
+name: alphaprofit-matchup-style
+
+on:
+  push:
+    paths:
+      - 'alphaodds/build/alphaprofit_matchup_style_gate.py'
+      - '.github/workflows/alphaprofit-matchup-style.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  matchup-style:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy==2.1.1 pandas==2.2.3
+      - name: Execute matchup-style interaction gate
+        run: |
+          python alphaodds/build/alphaprofit_matchup_style_gate.py 2>&1 | tee alphaprofit_matchup_style_gate.log
+      - name: Capture runtime receipt
+        run: |
+          python --version > alphaprofit_matchup_style_environment.txt
+          python -m pip freeze >> alphaprofit_matchup_style_environment.txt
+          echo "commit=$GITHUB_SHA" >> alphaprofit_matchup_style_environment.txt
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alphaprofit-matchup-style
+          path: |
+            alphaprofit_matchup_runtime/out/**
+            alphaprofit_matchup_style_gate.log
+            alphaprofit_matchup_style_environment.txt
+          if-no-files-found: error
+          retention-days: 30
