@@ -24,7 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install numpy==2.1.1 pandas==2.2.3 scikit-learn==1.5.2
       - name: Execute weekly prop opportunity gate
+        shell: bash
         run: |
+          set -o pipefail
           python alphaodds/build/alphabreadth_weekly_prop_opportunity_gate.py 2>&1 | tee alphabreadth_weekly_prop.log
       - name: Upload artifact
         uses: actions/upload-artifact@v4
